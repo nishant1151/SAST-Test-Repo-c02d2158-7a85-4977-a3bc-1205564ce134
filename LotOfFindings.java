@@ -49,6 +49,7 @@ public class FileServer {
               new ModelMap().addAttribute("uploadError", "File upload failed!"));
     }
   }
+
   @AllArgsConstructor
   @Getter
   private class UploadedFile {
@@ -321,4 +322,5 @@ private final LessonDataSource dataSource;
       }
     }
   }
+
 }
