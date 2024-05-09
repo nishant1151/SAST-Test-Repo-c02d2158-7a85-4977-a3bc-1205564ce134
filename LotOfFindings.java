@@ -23,17 +23,32 @@ public class FileServer {
 
   @PostMapping(value = "/fileupload")
   public ModelAndView importFile(@RequestParam("file") MultipartFile myFile) throws IOException {
+
+    // File size validation (optional, adjust maxFileSize as needed)
+    long maxFileSize = 1024 * 1024 * 5; // 5 MB limit
+    if (myFile.getSize() > maxFileSize) {
+      return new ModelAndView(
+              new RedirectView("files", true),
+              new ModelMap().addAttribute("uploadError", "File size exceeds limit!"));
+    }
+
     var user = (WebGoatUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     var destinationDir = new File(fileLocation, user.getUsername());
     destinationDir.mkdirs();
-    myFile.transferTo(new File(destinationDir, myFile.getOriginalFilename()));
-    log.debug("File saved to {}", new File(destinationDir, myFile.getOriginalFilename()));
 
-    return new ModelAndView(
-        new RedirectView("files", true),
-        new ModelMap().addAttribute("uploadSuccess", "File uploaded successful"));
+    try {
+      myFile.transferTo(new File(destinationDir, myFile.getOriginalFilename()));
+      log.debug("File saved to {}", new File(destinationDir, myFile.getOriginalFilename()));
+      return new ModelAndView(
+              new RedirectView("files", true),
+              new ModelMap().addAttribute("uploadSuccess", "File uploaded successful"));
+    } catch (IllegalStateException | IOException e) {
+      log.error("File upload failed: ", e);
+      return new ModelAndView(
+              new RedirectView("files", true),
+              new ModelMap().addAttribute("uploadError", "File upload failed!"));
+    }
   }
-
   @AllArgsConstructor
   @Getter
   private class UploadedFile {
